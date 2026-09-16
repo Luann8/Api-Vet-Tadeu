@@ -1,6 +1,7 @@
 package br.edu.univassouras.api_vet_tadeu.controller;
 
 import br.edu.univassouras.api_vet_tadeu.dto.AnimalRequestDTO;
+import br.edu.univassouras.api_vet_tadeu.dto.StatusUpdateDTO;
 import br.edu.univassouras.api_vet_tadeu.enums.Especie;
 import br.edu.univassouras.api_vet_tadeu.enums.PorteAnimal;
 import br.edu.univassouras.api_vet_tadeu.enums.StatusAdocao;
@@ -120,7 +121,6 @@ class AnimalControllerTest {
     @Test
     @DisplayName("Deve excluir um animal com sucesso (204 No Content)")
     void deveExcluirAnimal() throws Exception {
-        // Primeiro cria um animal para ser excluído
         AnimalRequestDTO dto = new AnimalRequestDTO(
                 "Animal Para Deletar",
                 Especie.GATO,
@@ -140,12 +140,47 @@ class AnimalControllerTest {
 
         Integer id = com.jayway.jsonpath.JsonPath.read(responseStr, "$.id");
 
-        // Executa o DELETE
         mockMvc.perform(delete("/api/animais/" + id))
                 .andExpect(status().isNoContent());
 
-        // Confirma que não existe mais (404)
         mockMvc.perform(get("/api/animais/" + id))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/animais/{id}/status - Deve retornar 200 OK ao atualizar status")
+    void deveRetornar200AoAtualizarStatus() throws Exception {
+        Long id = 1L;
+        StatusUpdateDTO dto = new StatusUpdateDTO(StatusAdocao.ADOTADO);
+
+        mockMvc.perform(patch("/api/animais/{id}/status", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusAdocao").value("ADOTADO"));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/animais/{id}/status - Deve retornar 400 Bad Request se o status for nulo")
+    void deveRetornar400AoPassarStatusNulo() throws Exception {
+        Long id = 1L;
+        String jsonCorpo = "{\"statusAdocao\": null}";
+
+        mockMvc.perform(patch("/api/animais/{id}/status", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonCorpo))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /api/animais/paginado - Deve retornar 200 OK com a estrutura de página")
+    void deveRetornar200NaListagemPaginada() throws Exception {
+        mockMvc.perform(get("/api/animais/paginado")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .param("sort", "nome,asc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
     }
 }
