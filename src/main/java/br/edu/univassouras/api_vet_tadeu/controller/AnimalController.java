@@ -2,6 +2,7 @@ package br.edu.univassouras.api_vet_tadeu.controller;
 
 import br.edu.univassouras.api_vet_tadeu.dto.AnimalRequestDTO;
 import br.edu.univassouras.api_vet_tadeu.dto.AnimalResponseDTO;
+import br.edu.univassouras.api_vet_tadeu.dto.StatusUpdateDTO;
 import br.edu.univassouras.api_vet_tadeu.enums.Especie;
 import br.edu.univassouras.api_vet_tadeu.enums.StatusAdocao;
 import br.edu.univassouras.api_vet_tadeu.service.AnimalService;
@@ -14,6 +15,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.net.URI;
 import java.util.List;
@@ -84,6 +87,29 @@ public class AnimalController {
     ) {
         AnimalResponseDTO atualizado = animalService.atualizar(id, dto);
         return ResponseEntity.ok(atualizado);
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Atualizar status de adoção", description = "Atualiza apenas o status de adoção de um animal (DISPONIVEL, EM_PROCESSO ou ADOTADO).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados da requisição inválidos"),
+            @ApiResponse(responseCode = "404", description = "Animal não encontrado com o ID informado")
+    })
+    public ResponseEntity<AnimalResponseDTO> atualizarStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody StatusUpdateDTO dto
+    ) {
+        AnimalResponseDTO atualizado = animalService.atualizarStatus(id, dto);
+        return ResponseEntity.ok(atualizado);
+    }
+
+    @GetMapping("/paginado")
+    @Operation(summary = "Consultar animais com paginação", description = "Retorna os animais cadastrados de forma paginada e ordenável (ex: ?page=0&size=10&sort=nome,asc).")
+    @ApiResponse(responseCode = "200", description = "Página de animais retornada com sucesso")
+    public ResponseEntity<Page<AnimalResponseDTO>> listarPaginado(Pageable pageable) {
+        Page<AnimalResponseDTO> pagina = animalService.listarPaginado(pageable);
+        return ResponseEntity.ok(pagina);
     }
 
     @DeleteMapping("/{id}")

@@ -2,6 +2,7 @@ package br.edu.univassouras.api_vet_tadeu.service;
 
 import br.edu.univassouras.api_vet_tadeu.dto.AnimalRequestDTO;
 import br.edu.univassouras.api_vet_tadeu.dto.AnimalResponseDTO;
+import br.edu.univassouras.api_vet_tadeu.dto.StatusUpdateDTO;
 import br.edu.univassouras.api_vet_tadeu.enums.Especie;
 import br.edu.univassouras.api_vet_tadeu.enums.StatusAdocao;
 import br.edu.univassouras.api_vet_tadeu.exception.ResourceNotFoundException;
@@ -9,6 +10,8 @@ import br.edu.univassouras.api_vet_tadeu.model.Animal;
 import br.edu.univassouras.api_vet_tadeu.repository.AnimalRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,11 +69,25 @@ public class AnimalService {
     }
 
     @Transactional
+    public AnimalResponseDTO atualizarStatus(Long id, StatusUpdateDTO dto) {
+        Animal animal = buscarEntidadePorId(id);
+        animal.setStatusAdocao(dto.getStatusAdocao());
+        Animal atualizado = animalRepository.save(animal);
+        return new AnimalResponseDTO(atualizado);
+    }
+
+    @Transactional
     public void excluir(Long id) {
         if (!animalRepository.existsById(id)) {
             throw new ResourceNotFoundException(id);
         }
         animalRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AnimalResponseDTO> listarPaginado(Pageable pageable) {
+        return animalRepository.findAll(pageable)
+                .map(AnimalResponseDTO::new);
     }
 
     public Animal buscarEntidadePorId(Long id) {
